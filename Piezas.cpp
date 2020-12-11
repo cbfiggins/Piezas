@@ -2,7 +2,7 @@
 #include <vector>
 /** CLASS Piezas
  * Class for representing a Piezas vertical board, which is roughly based
- * on the game "Connect Four" where pieces are placed in a column and 
+ * on the game "Connect Four" where pieces are placed in a column and
  * fall to the bottom of the column, or on top of other pieces already in
  * that column. For an illustration of the board, see:
  *  https://en.wikipedia.org/wiki/Connect_Four
@@ -17,11 +17,19 @@
 
 
 /**
- * Constructor sets an empty board (default 3 rows, 4 columns) and 
+ * Constructor sets an empty board (default 3 rows, 4 columns) and
  * specifies it is X's turn first
 **/
 Piezas::Piezas()
 {
+  board.resize(BOARD_ROWS);
+  for(int i = 0; i < BOARD_ROWS; i++){
+    board[i].resize(BOARD_COLS);
+  }
+  turn = X;
+  for(int i=0; i<BOARD_ROWS; i++)
+    for(int j=0; j<BOARD_COLS; j++)
+      board[i][j] = Blank;
 }
 
 /**
@@ -30,18 +38,47 @@ Piezas::Piezas()
 **/
 void Piezas::reset()
 {
+  turn = X;
+  for(int i=0; i<BOARD_ROWS; i++)
+    for(int j=0; j<BOARD_COLS; j++)
+      board[i][j] = Blank;
 }
 
 /**
  * Places a piece of the current turn on the board, returns what
- * piece is placed, and toggles which Piece's turn it is. dropPiece does 
+ * piece is placed, and toggles which Piece's turn it is. dropPiece does
  * NOT allow to place a piece in a location where a column is full.
- * In that case, placePiece returns Piece Blank value 
+ * In that case, placePiece returns Piece Blank value
  * Out of bounds coordinates return the Piece Invalid value
  * Trying to drop a piece where it cannot be placed loses the player's turn
-**/ 
+**/
 Piece Piezas::dropPiece(int column)
 {
+  if(column >= BOARD_COLS || column < 0){
+    if(turn == X)
+      turn = O;
+    else
+      turn = X;
+
+    return Invalid;
+  }
+
+  for(int i = 0; i < BOARD_ROWS; i++){
+    if(board[i][column] == Blank){
+      board[i][column] = turn;
+      if(turn == X)
+        turn = O;
+      else
+        turn = X;
+      return board[i][column];
+    }
+  }
+
+    if(turn == X)
+      turn = O;
+    else
+      turn = X;
+
     return Blank;
 }
 
@@ -51,13 +88,16 @@ Piece Piezas::dropPiece(int column)
 **/
 Piece Piezas::pieceAt(int row, int column)
 {
-    return Blank;
+  if(row >= BOARD_ROWS || column >= BOARD_COLS || row < 0 || column < 0)
+    return Invalid;
+
+  return board[row][column];
 }
 
 /**
  * Returns which Piece has won, if there is a winner, Invalid if the game
  * is not over, or Blank if the board is filled and no one has won ("tie").
- * For a game to be over, all locations on the board must be filled with X's 
+ * For a game to be over, all locations on the board must be filled with X's
  * and O's (i.e. no remaining Blank spaces). The winner is which player has
  * the most adjacent pieces in a single line. Lines can go either vertically
  * or horizontally. If both X's and O's have the same max number of pieces in a
@@ -65,5 +105,83 @@ Piece Piezas::pieceAt(int row, int column)
 **/
 Piece Piezas::gameState()
 {
-    return Blank;
+  int X_max = 0; //stores max X length
+  int O_max = 0; //stores max O length
+
+  int X_cur = 0;
+  int O_cur = 0;
+
+  if(board[2][0] != Blank && board[2][1] != Blank && board[2][2] != Blank && board[2][3] != Blank){
+
+    //horizontal length checks
+    for(int i = 0; i < BOARD_ROWS; i++){
+      if(X_cur > X_max){
+        X_max = X_cur;
+      }
+      if(O_cur > O_max){
+        O_max = O_cur;
+      }
+      X_cur = 0;
+      O_cur = 0;
+      for(int j = 0; j < BOARD_COLS; j++){
+        if(board[i][j] == X){
+          X_cur++;
+          if(O_cur != 0){
+            if(O_cur > O_max){
+              O_max = O_cur;
+            }
+            O_cur = 0;
+          }
+        }else{
+          O_cur++;
+          if(X_cur != 0){
+            if(X_cur > X_max){
+              X_max = X_cur;
+            }
+            X_cur = 0;
+          }
+        }
+      }
+    }
+
+    //vertical length checks
+    for(int i = 0; i < BOARD_COLS; i++){
+      if(X_cur > X_max){
+        X_max = X_cur;
+      }
+      if(O_cur > O_max){
+        O_max = O_cur;
+      }
+      X_cur = 0;
+      O_cur = 0;
+      for(int j = 0; j < BOARD_ROWS; j++){
+        if(board[j][i] == X){
+          X_cur++;
+          if(O_cur != 0){
+            if(O_cur > O_max){
+              O_max = O_cur;
+            }
+            O_cur = 0;
+          }
+        }else{
+          O_cur++;
+          if(X_cur != 0){
+            if(X_cur > X_max){
+              X_max = X_cur;
+            }
+            X_cur = 0;
+          }
+        }
+      }
+    }
+    //check who won
+    if(X_max > O_max)
+      return X;
+    else if(X_max < O_max)
+      return O;
+    else
+      return Blank;
+  }
+    //board isn't full yet
+    return Invalid;
 }
